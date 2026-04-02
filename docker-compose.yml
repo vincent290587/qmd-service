@@ -1,0 +1,20 @@
+services:
+  qmd:
+    build: .
+    container_name: qmd-search
+    ports:
+      - "8999:8181"
+    volumes:
+      # Map your local markdown folder to the container
+      - ./my-docs:/docs:ro
+      # Persist the index and model cache
+      - qmd_data:/root/.config/qmd
+      - qmd_cache:/root/.cache/qmd
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Required for Linux; works on Mac/Win too
+
+volumes:
+  qmd_data:
+  qmd_cache:
+  
