@@ -40,22 +40,35 @@ qmd() {
 }
 
 alias getwisdom='_getwisdom() { \
-    local url=$1; \
+    local url="$1"; \
     local timestamp=$(date +%Y%m%d_%H%M%S); \
     local output_dir="$HOME/Github/qmd-service/my-docs"; \
     local tmp_raw=$(mktemp /tmp/raw_XXXXXX.txt); \
     local tmp_clean=$(mktemp /tmp/clean_XXXXXX.txt); \
+    \
+    # Create output dir if missing \
+    mkdir -p "$output_dir"; \
     \
     echo "--- Fetching and Slicing Content ---"; \
     \
     # 1. Download as text \
     lynx -dump -nolist "$url" > "$tmp_raw"; \
     \
+    # Check if download actually worked \
+    if [ ! -s "$tmp_raw" ]; then echo "Error: Download failed or page is empty."; rm "$tmp_raw"; return 1; fi; \
+    \
+    # 2. Hard check for "transcript" keyword \
+    if ! grep -qi "transcript" "$tmp_raw"; then \
+        echo "Error: Keywork '\''transcript'\'' not found on page. Skipping."; \
+        rm "$tmp_raw"; \
+        return 1; \
+    fi; \
+    \
     # 2. Extract content between markers (case-insensitive) \
     sed -n "/Episode transcript/I,/Related posts/I p" "$tmp_raw" > "$tmp_clean"; \
     \
     # 3. Process with Fabric \
-    cat "$tmp_clean" | fabric --pattern extract_wisdom > /tmp/wisdom.md; \
+    cat "$tmp_clean" | fabric --pattern extract_wisdom | tee /tmp/wisdom.md; \
     \
     # 4. Save to destination \
     cp /tmp/wisdom.md "$output_dir/wisdom_$timestamp.md"; \
@@ -63,7 +76,7 @@ alias getwisdom='_getwisdom() { \
     # Cleanup \
     rm "$tmp_raw" "$tmp_clean"; \
     \
-    echo "Success! Wisdom archived as wisdom_$timestamp.md"; \
+    echo "Success! Wisdom archived as $output_dir/wisdom_$timestamp.md"; \
 }; _getwisdom'
 
 ```
