@@ -6,7 +6,21 @@ https://github.com/tobi/qmd.git
 ## Build image
 
 ```bash
+cp server.ts ./qmd/src/mcp/server.ts
 docker compose up -d --build
+```
+
+## CLI
+
+```bash
+qmd query "question"              # Auto-expand + rerank
+qmd query $'lex: X\nvec: Y'       # Structured
+qmd query $'expand: question'     # Explicit expand
+qmd query --json --explain "q"    # Show score traces (RRF + rerank blend)
+qmd search "keywords"             # BM25 only (no LLM)
+qmd get "#abc123"                 # By docid
+qmd multi-get "journals/2026-*.md" -l 40  # Batch pull snippets by glob
+qmd multi-get notes/foo.md,notes/bar.md   # Comma-separated list, preserves order
 ```
 
 ## Bash aliases
@@ -52,6 +66,65 @@ alias getwisdom='_getwisdom() { \
     echo "Success! Wisdom archived as wisdom_$timestamp.md"; \
 }; _getwisdom'
 
+```
+
+Execute on each line of a file:
+
+```bash
+while IFS= read -r line; do getwisdom "$line"; echo "sleeping 80s..."; sleep 80; done < memo.md
+```
+
+## Powershell aliases
+
+```powershell
+notepad $PROFILE
+
+function Get-Wisdom {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Url
+    )
+
+    $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $OutputDir = "$HOME\Github\qmd-service\my-docs"
+    $TempWisdom = "$env:TEMP\wisdom.md"
+
+    # Ensure output directory exists
+    if (!(Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir | Out-Null }
+
+    Write-Host "--- Fetching and Slicing Content ---" -ForegroundColor Cyan
+
+    # 1. Download webpage and convert to plain text
+    $WebResponse = Invoke-WebRequest -Uri $Url -UseBasicParsing
+    $RawText = $WebResponse.Content
+
+    # 2. Extract content between markers using Regex
+    # This looks for everything between "Episode transcript" and "Related posts"
+    $Pattern = "(?s)Episode transcript(.*?)Related posts"
+    if ($RawText -match $Pattern) {
+        $CleanText = $Matches[1].Trim()
+    } else {
+        Write-Host "Markers not found. Processing full page content instead." -ForegroundColor Yellow
+        $CleanText = $RawText
+    }
+
+    # 3. Process with Fabric and display on screen (Tee-Object)
+    # We use Out-String to ensure the text is passed correctly to the external tool
+    $CleanText | fabric --pattern extract_wisdom | Tee-Object -FilePath $TempWisdom
+
+    # 4. Save to destination with unique name
+    $FinalPath = Join-Path $OutputDir "wisdom_$Timestamp.md"
+    Copy-Item -Path $TempWisdom -Destination $FinalPath
+
+    Write-Host "`n--- Process Complete ---" -ForegroundColor Green
+    Write-Host "Saved to: $FinalPath"
+}
+```
+
+Executes on each line of a file:
+
+```powershell
+Get-Content memo.md | Where-Object { $_ -match "\S" } | ForEach-Object { Get-Wisdom $_; Write-Host "Sleeping for 80s..."; Start-Sleep -s 80 }
 ```
 
 ## Converts PDFs to Markdown
