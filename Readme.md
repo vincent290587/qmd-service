@@ -92,52 +92,64 @@ while IFS= read -r line; do getwisdom "$line"; echo "sleeping 80s..."; sleep 80;
 ```powershell
 notepad $PROFILE
 
-function Get-Wisdom {
+function GetWisdom {
     param (
         [Parameter(Mandatory=$true)]
         [string]$Url
     )
 
     $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    # C:\Users\vgol\Documents\01_Firmware\xx_BlackOps\qmd-service
     $OutputDir = "$HOME\Github\qmd-service\my-docs"
     $TempWisdom = "$env:TEMP\wisdom.md"
 
-    # Ensure output directory exists
+    # Create directory if missing
     if (!(Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir | Out-Null }
 
-    Write-Host "--- Fetching and Slicing Content ---" -ForegroundColor Cyan
+    Write-Host "--- Checking: $Url ---" -ForegroundColor Cyan
 
-    # 1. Download webpage and convert to plain text
-    $WebResponse = Invoke-WebRequest -Uri $Url -UseBasicParsing
-    $RawText = $WebResponse.Content
+    try {
+        # 1. Download
+        $WebResponse = Invoke-WebRequest -Uri $Url -UseBasicParsing -UserAgent "Mozilla/5.0"
+        $RawText = $WebResponse.Content
 
-    # 2. Extract content between markers using Regex
-    # This looks for everything between "Episode transcript" and "Related posts"
-    $Pattern = "(?s)Episode transcript(.*?)Related posts"
-    if ($RawText -match $Pattern) {
-        $CleanText = $Matches[1].Trim()
-    } else {
-        Write-Host "Markers not found. Processing full page content instead." -ForegroundColor Yellow
-        $CleanText = $RawText
+        # 2. Hard check for "transcript" keyword
+        if ($RawText -notmatch "transcript") {
+            Write-Host "Error: Keyword 'transcript' not found on page. Skipping." -ForegroundColor Red
+            return
+        }
+
+        # 3. Slice content
+        # Matches everything between the two markers (case-insensitive, single-line mode)
+        Write-Host "Transcript found. Extracting wisdom..." -ForegroundColor Yellow
+        $Pattern = "(?si)Episode transcript(.*?)Related posts"
+
+        if ($RawText -match $Pattern) {
+            $CleanText = $Matches[1].Trim()
+        } else {
+            Write-Host "Error: Marker range not found. Skipping." -ForegroundColor Red
+            return
+        }
+
+        # 4. Process with Fabric and display
+        $CleanText | fabric --pattern extract_wisdom | Tee-Object -FilePath $TempWisdom
+
+        # 5. Save and Cleanup
+        $FinalPath = Join-Path $OutputDir "wisdom_$Timestamp.md"
+        Move-Item -Path $TempWisdom -Destination $FinalPath -Force
+
+        Write-Host "`nDone! Saved to: $FinalPath" -ForegroundColor Green
+
+    } catch {
+        Write-Host "Error: Failed to process $Url. $($_.Exception.Message)" -ForegroundColor Red
     }
-
-    # 3. Process with Fabric and display on screen (Tee-Object)
-    # We use Out-String to ensure the text is passed correctly to the external tool
-    $CleanText | fabric --pattern extract_wisdom | Tee-Object -FilePath $TempWisdom
-
-    # 4. Save to destination with unique name
-    $FinalPath = Join-Path $OutputDir "wisdom_$Timestamp.md"
-    Copy-Item -Path $TempWisdom -Destination $FinalPath
-
-    Write-Host "`n--- Process Complete ---" -ForegroundColor Green
-    Write-Host "Saved to: $FinalPath"
 }
 ```
 
 Executes on each line of a file:
 
 ```powershell
-Get-Content memo.md | Where-Object { $_ -match "\S" } | ForEach-Object { Get-Wisdom $_; Write-Host "Sleeping for 80s..."; Start-Sleep -s 80 }
+Get-Content memo.md | ForEach-Object { GetWisdom $_; Write-Host "Sleeping for 80s..."; Start-Sleep -s 80 }
 ```
 
 ## Converts PDFs to Markdown
