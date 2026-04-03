@@ -1,4 +1,3 @@
-
 https://www.fasttalklabs.com/fast-talk/what-makes-the-pedal-stroke-so-unique-and-why-strength-training-is-so-important/
 https://www.fasttalklabs.com/fast-talk/the-5-most-important-things-to-know-about-nutrition/
 https://www.fasttalklabs.com/fast-talk/top-coaches-share-strategies-on-base-training-with-limited-time/
