@@ -12,11 +12,9 @@ https://www.fasttalklabs.com/fast-talk/to-use-or-not-to-use-block-periodization-
 https://www.fasttalklabs.com/fast-talk/dr-stephen-seiler-on-aha-moments-tailoring-high-intensity-training-and-how-much-food-to-carry/
 https://www.fasttalklabs.com/fast-talk/are-your-interval-workouts-effective-with-dr-stephen-seiler/
 https://www.fasttalklabs.com/fast-talk/how-much-high-intensity-training-do-you-need/
-
 https://www.fasttalklabs.com/fast-talk/whats-the-difference-between-threshold-and-vo2max-interval-workouts/
 https://www.fasttalklabs.com/fast-talk/mission-impossible-determining-your-true-threshold/
 https://www.fasttalklabs.com/fast-talk/cardiovascular-drift-with-dr-ed-coyle/
-https://www.fasttalklabs.com/fast-talk/to-use-or-not-to-use-block-periodization-plans-with-joe-friel/
 https://www.fasttalklabs.com/fast-talk/demystifying-periodization-with-joe-friel/
 https://www.fasttalklabs.com/fast-talk/applying-the-polarized-training-model-with-dr-stephen-seiler/
 https://www.fasttalklabs.com/fast-talk/do-we-need-training-zones-with-dr-andy-coggan-dr-stephen-mcgregor-and-hunter-allen/
